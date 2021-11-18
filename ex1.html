@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>맛집 지도</title>
+</head>
+
+<body>
+<div id="map" style="width:100vw;height:50vh;"></div>
+<div id="result"></div>
+
+<style>
+    .menuDiv {
+        display: flex;
+        margin: 50px;
+        justify-content: space-between;
+    }
+    .menuDiv > a {
+        background-color: #a2c9f5;
+        color: aliceblue;
+        font-size: larger;
+        border-radius: 3px;
+        padding: 5px;
+        text-decoration: none;
+    }
+</style>
+
+<div class="menuDiv">
+    <a href="전체">전체</a>
+    <a href="일식" onclick="loadData('http://localhost:5555/test/A3team.json')">일식</a>
+    <a href="공연장" onclick="loadData('http://localhost:5555/test/1team.json')">공연장</a>
+    <a href="한식" onclick="loadData('http://localhost:5555/test/2team.json')">한식</a>
+    <a href="돼지고기" onclick="loadData('http://localhost:5555/test/3team.json')">돼지고기</a>
+</div>
+
+<ul class="storeList">
+
+</ul>
+
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=c77b7df52ca018e8760dea5bc1e3c519"></script>
+<script>
+    var mapContainer = document.getElementById('map'), // 지도를 표시할 div
+        mapOption = {
+            center: new kakao.maps.LatLng(37.496900, 127.027813), // 지도의 중심좌표
+            level: 4 // 지도의 확대 레벨
+        };
+
+    // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+    var map = new kakao.maps.Map(mapContainer, mapOption);
+</script>
+<script>
+    kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+
+        // 클릭한 위도, 경도 정보를 가져옵니다
+        var latlng = mouseEvent.latLng;
+
+        var message = '클릭한 위치의 위도는 ' + latlng.getLat() + ' 이고, ';
+        message += '경도는 ' + latlng.getLng() + ' 입니다';
+
+        var resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+
+    });
+
+    const markerArr =[] // 기존 마커 의믜
+
+    function showMarkers(stores) { // 배열 추가하면 마커를 찍어주는 Fn
+        // 기존 마커들은 지우기
+        for (let i = 0; i < markerArr.length; i++) {
+            markerArr[i].setMap(null) // null넣으면 마커 제거
+        }
+
+        for (let i = 0; i < stores.length; i++) {
+            const store = stores[i]
+            const latLng = new kakao.maps.LatLng(store.lat, store.lng)
+            const marker = new kakao.maps.Marker({
+                map:map,
+                position:latLng,
+                title:store.name
+            })
+
+            markerArr.push(marker)
+        }//end for
+    }// end fn
+
+    // 이벤트를 div 바깥에 걸었어 (실제로 이벤트 발생하는애한테 건게 아니야, onclick X) -> 이벤트 매번 걸 필요없음
+    // 단점: menuDiv 공백을 클릭해도 이벤트가 발생 -> 그래서 a태그 일때만 이벤트 걸고싶음!!
+    document.querySelector(".menuDiv").addEventListener("click",(e) => {
+        e.preventDefault() // 기본 동작 중지
+        e.stopPropagation() // 버블링하지마(이벤트 전파하지마)
+
+        const target = e.target // 실제로 이벤트가 발생한 애 = e.target (이벤트를 바깥으로 걸어서)
+
+        if(target.tagName !=='A'){
+            return
+        } // 공백을 누르면 return 아무것도 없어, a태그인 녀석들만 클릭 이벤트 발생
+
+        const keyword = target.getAttribute("href") // 속성의 값을 얻어돔
+
+        if(keyword !== '전체'){
+            const result = arr.filter( s=> s.menu === keyword)
+            showMarkers(result)
+        } else {
+            showMarkers(arr)
+
+        }
+
+    },false)
+
+    function loadData(serverInfo) {
+
+        console.log("loadData: "+ serverInfo) // console
+
+        fetch(serverInfo)
+            .then( response => response.json())
+            .then( data => {
+                makeList(data)
+            })
+    }
+
+    function makeList(arr) {
+        const ulEle = document.querySelector(".storeList")
+        let str =''
+        for (let i = 0; i < arr.length; i++) {
+            str += `<li data-name="${arr[i].name}" data-lat="${arr[i].lat}" data-lng="${arr[i].lng}">${arr[i].name}</li>`
+        }//end for
+
+        ulEle.innerHTML = str
+    }
+
+    document.querySelector(".storeList").addEventListener("click",(e)=>{
+        e.stopPropagation()
+        e.preventDefault()
+
+        fetch('http://localhost:5555/test/1team.json')
+        fetch('http://localhost:5555/test/2team.json')
+        fetch('http://localhost:5555/test/3team.json')
+        fetch('http://localhost:5555/test/A3team.json')
+
+        const target = e.target // <li>
+
+        if(target.tagName !== 'LI'){
+            return
+        }
+        console.log(target)
+
+        const name = target.getAttribute("data-name")
+        const lat = target.getAttribute("data-lat")
+        const lng = target.getAttribute("data-lng")
+
+        console.log(name,lat,lng)
+
+    }, false)
+
+
+
+
+</script>
+<script>
+
+
+</script>
+
+
+</body>
+
+
+</html>
